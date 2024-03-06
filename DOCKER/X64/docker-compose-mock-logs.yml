@@ -1,0 +1,90 @@
+version: '2'
+
+services:
+  stats:
+    image: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    ports:
+      - '15672:15672'
+      - '5672:5672'
+    restart: always
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://localhost:12201"
+        tag: "first-logs"
+  mem:
+    build:
+      context: ./docker_memcached
+      dockerfile: Dockerfile
+    image: eg_memcached
+    ports:
+      - '11211:11211'
+    restart: always
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://localhost:12201"
+        tag: "first-logs"
+  nginx:
+    build:
+      context: ./docker_nginx
+      dockerfile: Dockerfile
+    image: eg_nginx
+    ports:
+      - '8887:8887'
+    links:
+      - 'push'
+    restart: always
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://localhost:12201"
+        tag: "first-logs"
+  mock:
+    build:
+      context: ./docker_mock
+      dockerfile: Dockerfile
+    image: eg_mock
+    ports:
+      - '8081:8081'
+    restart: always
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://localhost:12201"
+        tag: "first-logs"
+  push:
+    build:
+      context: ./docker_pushnotif
+      dockerfile: Dockerfile
+    image: eg_pushnotif
+    environment:
+      - RABBITMQ_HOST=stats
+      - MEMCACHED_HOST=mem
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+      - HPC_APIURL=http://mock:8081/api/v2
+    volumes:
+      - app_sourcecode:/opt/pushnotification
+    ports:
+      - '8889:8889'
+    depends_on:
+      - 'stats'
+      - 'mem'
+      - 'mock'
+    restart: always
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://localhost:12201"
+        tag: "first-logs"
+
+volumes:
+  app_sourcecode:
+    driver_opts:
+      type: none
+      device: /PUSH_NOTIF/pushnotificationsinfrastructure/
+      o: bind

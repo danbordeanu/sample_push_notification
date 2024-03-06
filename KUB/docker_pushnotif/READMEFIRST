@@ -1,0 +1,2 @@
+- Please do copy the code of pushnotification into assets/NOTIFICATIONS_QUEUE directory
+- Change the port of pushnotification in config.ini from 8889 to 8080 (!!!!TODO!!!we might want to have this value taken from ENV vars)

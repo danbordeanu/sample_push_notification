@@ -1,0 +1,53 @@
+version: '2'
+
+services:
+  stats:
+    image: host.io/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    ports:
+      - '15672:15672'
+      - '5672:5672'
+    restart: always
+  mem:
+    image: hostbla.azurecr.io/eg_memcached
+    ports:
+      - '11211:11211'
+    restart: always
+  nginx:
+    image: hostbla.azurecr.io/eg_nginx
+    ports:
+      - '8080:8080'
+    links:
+      - 'push'
+    restart: always
+  mock:
+    image: hostbla.azurecr.io/eg_mock
+    ports:
+      - '8081:8081'
+    restart: always     
+  push:
+    image: hostbla.azurecr.io/eg_pushnotif
+    environment:
+      - RABBITMQ_HOST=stats
+      - MEMCACHED_HOST=mem
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+      - HPC_APIURL=http://mock:8081/api/v2
+    volumes:
+      - app_sourcecode:/opt/pushnotification
+    ports:
+      - '8080:8080'
+    depends_on:
+      - 'stats'
+      - 'mem'
+      - 'mock'
+    restart: always
+
+volumes:
+  app_sourcecode:
+    driver_opts:
+      type: none
+      device:/pushnotificationsinfrastructure/
+      o: bind

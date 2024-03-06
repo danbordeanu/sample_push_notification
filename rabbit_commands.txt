@@ -1,0 +1,16 @@
+# see all messages stored in all queues
+sudo rabbitmqctl list_queues name messages_ready messages_unacknowledged
+# 
+sudo rabbitmqctl purge_queue results 
+sudo rabbitmqctl purge_queue stop_app
+sudo rabbitmqctl purge_queue start_app
+sudo rabbitmqctl purge_queue status
+sudo rabbitmqctl list_queues
+
+
+# enable remote management
+
+rabbitmq-plugins enable rabbitmq_management
+
+# restart service
+sudo /etc/init.d/rabbitmq-server start
